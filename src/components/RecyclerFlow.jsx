@@ -15,6 +15,7 @@ const RecyclerFlow = () => {
 
   const handlePlaceBid = () => {
     if (!selectedLot || !bidAmount) return;
+    if (parseInt(bidAmount) < selectedLot.basePrice) return; // Prevent low bids
 
     placeBid(selectedLot.id, parseInt(bidAmount));
     setBidStage('placed');
@@ -73,8 +74,16 @@ const RecyclerFlow = () => {
           <ul>
             {lots.map((lot) => (
               <li key={lot.id}>
-                Lot #{lot.id} - {lot.items.length} items
-                <button onClick={() => setSelectedLot(lot)}>View Details</button>
+                Lot #{lot.id} - {lot.items.length} items - 
+                <strong> Base Price: ₹{lot.basePrice*1.15}</strong>
+                <button
+                  onClick={() => {
+                    setSelectedLot(lot);
+                    setBidAmount(String(lot.basePrice)); // Auto-fill with base price
+                  }}
+                >
+                  View Details
+                </button>
               </li>
             ))}
           </ul>
@@ -89,6 +98,7 @@ const RecyclerFlow = () => {
           {selectedLot && (
             <div>
               <p>Lot #{selectedLot.id} Details:</p>
+              <p><strong>Base Price: ₹{selectedLot.basePrice*1.15}</strong></p>
               <ul>
                 {selectedLot.items.map((item, index) => (
                   <li key={index}>
@@ -111,7 +121,11 @@ const RecyclerFlow = () => {
               />
 
               {bidStage === 'idle' && (
-                <button onClick={handlePlaceBid} style={{ backgroundColor: '#4CAF50' }}>
+                <button
+                  onClick={handlePlaceBid}
+                  style={{ backgroundColor: '#4CAF50' }}
+                  disabled={!bidAmount || parseInt(bidAmount) < selectedLot.basePrice*1.15}
+                >
                   Place Bid
                 </button>
               )}

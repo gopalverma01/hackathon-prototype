@@ -11,6 +11,7 @@ const dummyDb = {
   greenPasses: []
 };
 
+
 // Simulate AI classification
 function classifyItem(image) {
   const types = ['battery','phone', 'laptop', 'tablet', 'battery'];
@@ -26,11 +27,13 @@ function checkBatterySafety(item) {
 
 // Simulate creating a lot
 function createLot(items) {
+   const basePrice = items.reduce((sum, item) => sum + (item.price || 0), 0);
   const newLot = {
     id: dummyDb.lots.length + 1,
     items: items,
     location: 'Local Warehouse',
-    status: 'available'
+    status: 'available',
+    basePrice
   };
   dummyDb.lots.push(newLot);
   return newLot;
@@ -59,5 +62,7 @@ function generateGreenPass(itemId) {
   dummyDb.greenPasses.push(newPass);
   return newPass;
 }
+// Simulate creating a lot
+
 
 export { dummyDb, classifyItem, checkBatterySafety, createLot, placeBid, generateGreenPass };

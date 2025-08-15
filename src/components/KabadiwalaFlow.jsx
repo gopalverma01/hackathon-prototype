@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { dummyDb, checkBatterySafety, createLot } from '../dummyDb';
 import imgg from '../assets/imgg.png';
 
 const KabadiwalaFlow = () => {
-  const places = ['A-12 - Mayur vihar West', 'B-22 Dwarka East', 'A-55 Karol bagh ', 'C-54 New Delhi', 'G-12 Karol bagh', 'A-99 New Delhi'];
+  const places = [
+    'A-12 - Mayur vihar West',
+    'B-22 Dwarka East',
+    'A-55 Karol bagh ',
+    'C-54 New Delhi',
+    'G-12 Karol bagh',
+    'A-99 New Delhi'
+  ];
 
   const initialItems = dummyDb.items
     .filter(item => !item.verified)
@@ -16,22 +23,27 @@ const KabadiwalaFlow = () => {
   const [verifiedItems, setVerifiedItems] = useState([]);
   const [createdLot, setCreatedLot] = useState(null);
   const [status, setStatus] = useState('');
+  const [calculatedPrice, setCalculatedPrice] = useState(0); // ⭐ Auto-calculated base price
 
-const moveToVerified = (item, isSafe) => {
-  // Remove the item from items
-  const updatedItems = items.filter(i => i.id !== item.id);
-  setItems(updatedItems);
+  // Auto-calculate base price whenever verified items change
+  useEffect(() => {
+    const total = verifiedItems.reduce((sum, item) => sum + (item.price || 0), 0);
+    setCalculatedPrice((total * 1.15).toFixed(2));
+  }, [verifiedItems]);
 
-  // Add to verified items
-  const verifiedItem = { ...item, verified: true, safe: isSafe };
-  setVerifiedItems(prev => [...prev, verifiedItem]);
+  const moveToVerified = (item, isSafe) => {
+    const updatedItems = items.filter(i => i.id !== item.id);
+    setItems(updatedItems);
 
-  setStatus(
-    `Item ${item.id} verified - ${
-      isSafe === null ? 'Picked-up' : `Battery ${isSafe ? 'safe' : 'unsafe'}`
-    }`
-  );
-};
+    const verifiedItem = { ...item, verified: true, safe: isSafe };
+    setVerifiedItems(prev => [...prev, verifiedItem]);
+
+    setStatus(
+      `Item ${item.id} verified - ${
+        isSafe === null ? 'Picked-up' : `Battery ${isSafe ? 'safe' : 'unsafe'}`
+      }`
+    );
+  };
 
   const handleSafe = (item) => {
     moveToVerified(item, true);
@@ -42,15 +54,17 @@ const moveToVerified = (item, isSafe) => {
   };
 
   const handlePickedUp = (item) => {
-    moveToVerified(item, true); // null means pickup without safety label
+    moveToVerified(item, true);
   };
 
   const handleCreateLot = () => {
     if (verifiedItems.length > 0) {
-      const lot = createLot(verifiedItems);
+      const lot = createLot(verifiedItems, parseFloat(calculatedPrice)); // ⭐ Pass calculated price
       setCreatedLot(lot);
       setVerifiedItems([]);
-      setStatus(`Created Lot #${lot.id} with ${lot.items.length} items`);
+      setStatus(`Created Lot #${lot.id} with ${lot.items.length} items, Base Price ₹${lot.basePrice*1.15}`);
+    } else {
+      setStatus('⚠ Please verify at least one item before creating lot.');
     }
   };
 
@@ -90,13 +104,10 @@ const moveToVerified = (item, isSafe) => {
                       >
                         Safe
                       </button>
-                      <button id='unsafe'
-                        onClick={() => handleUnsafe(item)}
-                        // style={{ backgroundColor: '#dd2915ff', color: 'white', marginRight: '5px' }}
-                      >
+                      <button id="unsafe" onClick={() => handleUnsafe(item)}>
                         Unsafe
                       </button>
-                      <button 
+                      <button
                         onClick={() => handlePickedUp(item)}
                         style={{ backgroundColor: '#2196F3', color: 'white' }}
                       >
@@ -151,12 +162,14 @@ const moveToVerified = (item, isSafe) => {
         <div className="step-number">4</div>
         <div className="step-content">
           <h3>Create Lot</h3>
+          <p>Base Price (auto-calculated): ₹{calculatedPrice}</p>
           <button onClick={handleCreateLot} disabled={verifiedItems.length === 0}>
             Create New Lot
           </button>
           {createdLot && (
             <div className="status-message success">
               <p>Created Lot #{createdLot.id}</p>
+              <p>Base Price: ₹{createdLot.basePrice*1.15}</p>
               <p>Contains {createdLot.items.length} items</p>
               <p>Status: {createdLot.status}</p>
             </div>
